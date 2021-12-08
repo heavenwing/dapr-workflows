@@ -204,6 +204,69 @@ On Kubernetes, run the following command:
 ```
 kubectl logs -l app=dapr-workflows-host -c host
 ```
+
+### Invoking workflows using Dapr PubSub
+
+Create a PubSub component for Dapr Workflows with named `workflows`:
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: workflows
+spec:
+  type: pubsub.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: localhost:6379
+  - name: redisPassword
+    value: ""
+```
+
+Above PubSub component use local redis as message broker.
+The name of the workflow will be registered as the name of the subscribed topic.
+
+#### Self hosted
+
+Put this yaml file into default dapr components directory.
+
+#### Kubernetes
+
+```
+kubectl apply -f my_workflows.yaml
+```
+
+#### Seeing events triggering logic apps
+
+Once an event is sent to the workflows PubSub component, check the logs Dapr Workflows to see the output.
+
+In standalone mode, the output will be printed to the local terminal.
+
+On Kubernetes, run the following command:
+
+```
+kubectl logs -l app=dapr-workflows-host -c host
+```
+
+You can use below command to run a publisher dapr app
+
+```
+dapr run --app-id workflowspublisher --dapr-http-port 3601
+```
+
+And use http request to publish message:
+
+```http
+POST http://localhost:3601/v1.0/publish/workflows/workflow3
+Content-Type: application/json
+
+{
+    "min":3,
+    "max":8
+}
+```
+
 ## Supported workflow features
 
 ### Supported Actions and Triggers

@@ -36,11 +36,6 @@ namespace Dapr.Workflows.Workflow
             this.workflowEngine = workflowEngine;
         }
 
-        public override Task<TopicEventResponse> OnTopicEvent(TopicEventRequest request, Grpc.Core.ServerCallContext context)
-        {
-            return Task.FromResult(new TopicEventResponse());
-        }
-
         public async override Task<InvokeResponse> OnInvoke(InvokeRequest request, Grpc.Core.ServerCallContext context)
         {
             if (!WorkflowExists(request.Method))
@@ -81,7 +76,29 @@ namespace Dapr.Workflows.Workflow
 
         public override Task<ListTopicSubscriptionsResponse> ListTopicSubscriptions(Empty request, Grpc.Core.ServerCallContext context)
         {
-            return Task.FromResult(new ListTopicSubscriptionsResponse());
+            var envelope = new ListTopicSubscriptionsResponse();
+            this.workflows.ForEach(w =>
+            {
+                envelope.Subscriptions.Add(new TopicSubscription
+                {
+                    PubsubName = "workflows",
+                    Topic = w.Name
+                });
+            });
+            return Task.FromResult(envelope);
+        }
+
+        public override async Task<TopicEventResponse> OnTopicEvent(TopicEventRequest request, Grpc.Core.ServerCallContext context)
+        {
+            if (!WorkflowExists(request.Topic))
+            {
+                throw new RpcException(new Status(StatusCode.InvalidArgument, $"Worflow with name {request.Topic} was not found"));
+            }
+
+            var response = await ExecuteWorkflow(request.Topic, request.Data);
+            Console.WriteLine(response.Value.ToStringUtf8());
+
+            return new TopicEventResponse();
         }
 
         public override Task<ListInputBindingsResponse> ListInputBindings(Empty request, Grpc.Core.ServerCallContext context)
@@ -119,7 +136,7 @@ namespace Dapr.Workflows.Workflow
             var req = new HttpRequestMessage(HttpMethod.Post, "http://localhost/workflow");
             var content = new System.Net.Http.StringContent(data.ToStringUtf8(), Encoding.UTF8, "application/json");
             req.Content = content;
-            
+
             var flowConfig = this.workflowEngine.Config;
             var flowName = workflow.Name;
 
