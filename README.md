@@ -33,7 +33,7 @@ By using a workflow engine, business logic can be defined in a declarative, no-c
 
 Dapr Workflows hosts a gRPC server that implements the Dapr Client API.
 
-This allows users to start workflows using gRPC and HTTP endpoints through Dapr, or start a workflow asynchronously using Dapr bindings.
+This allows users to start workflows using gRPC and HTTP endpoints through Dapr, or start a workflow asynchronously using Dapr bindings or pubsub.
 Once a workflow request comes in, Dapr Workflows uses the Logic Apps SDK to execute the workflow.
 
 ![Diagram](./assets/architecture_diagram.png)
@@ -53,6 +53,7 @@ Examine [workflow2.json](./samples/workflow2.json) as an example of a workflow t
 
 Since Dapr supports many pluggable state stores and bindings, the workflow becomes portable between different environments (cloud, edge or on-premises) without the user changing the code - *because there is no code involved*.
 
+In addition [workflow3.json](./samples/workflow3.json) add InitializeVariable and Wait action base on [workflow1.json](./samples/workflow1.json), and support trigger input.
 ## Get Started
 
 Prerequisites:
